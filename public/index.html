@@ -16,7 +16,8 @@
     </div>
   </div>
 
-  <div id="app" style="display:none;">
+  <!-- Main Dice Roller Application -->
+  <div id="app">
     <h1>D&D Virtual Dice Roller</h1>
     <div class="dice-container">
       <button class="dice-button" data-dice="4">
@@ -51,10 +52,16 @@
     </div>
   </div>
 
-  <!-- Include Socket.IO Client -->
-  <script src="/socket.io/socket.io.js"></script>
+  <!-- Archive Modal -->
+  <div id="archive-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Archived Rolls</h2>
+      <ul id="archive-list" class="archive-list"></ul>
+    </div>
+  </div>
 
-  <!-- Custom Script -->
+  <!-- Include WebSocket Client -->
   <script src="script.js"></script>
 </body>
 </html>

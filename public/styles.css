@@ -25,6 +25,7 @@ body {
   text-align: center;
   box-shadow: 0px 0px 25px 10px rgba(218, 165, 32, 0.7); /* Golden glowing shadow */
   transition: all 0.3s ease-in-out;
+  display: block;
 }
 
 #app:hover {
@@ -110,6 +111,7 @@ h1, h2, h3 {
 }
 
 /* Modal Styles */
+/* Hide modals by default */
 .modal {
   display: none; /* Hidden by default */
   position: fixed;

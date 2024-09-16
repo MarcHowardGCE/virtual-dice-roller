@@ -1,70 +1,65 @@
 const express = require('express');
 const http = require('http');
-const { Server } = require('socket.io');
+const WebSocket = require('ws');
 
-// Initialize Express and HTTP server
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const wss = new WebSocket.Server({ server });
 
 let rollArchive = [];
-let users = [];
+let users = {}; // Object to store connected users
 
-// Serve static files (HTML, CSS, JS)
 app.use(express.static('public'));
 
-// Socket.io logic
-io.on('connection', (socket) => {
+wss.on('connection', (ws) => {
   console.log('A user connected');
 
-  // Handle new user joining
-  socket.on('userJoined', (nickname) => {
-    socket.nickname = nickname; // Store nickname in socket session
-    users.push(nickname);
-    io.emit('updateUserList', users); // Update user list for all clients
-  });
+  ws.on('message', (message) => {
+    const data = JSON.parse(message);
 
-  // Handle dice roll
-  socket.on('diceRolled', (data) => {
-    const timestamp = new Date().toLocaleString();
-    const rollWithTimestamp = { ...data, timestamp };
-    
-    io.emit('diceRolled', rollWithTimestamp); // Broadcast the roll to all clients
+    if (data.action === 'nickname') {
+      // Assign the nickname to the user and store it
+      users[ws.id] = data.nickname;
 
-    rollArchive.unshift(rollWithTimestamp); // Save roll to archive
-  });
+      // Broadcast updated user list to all clients
+      broadcastUserList();
+    } else if (data.action === 'roll') {
+      // Add the roll to the archive
+      const timestamp = new Date().toLocaleString();
+      const rollData = { ...data, timestamp };
+      rollArchive.push(rollData); // Save the roll result
 
-  // Disable buttons for all clients
-  socket.on('disableButtons', () => {
-    io.emit('disableButtons');
-  });
-
-  // Enable buttons for all clients
-  socket.on('enableButtons', () => {
-    io.emit('enableButtons');
-  });
-
-  // Send archive when requested
-  socket.on('requestArchive', () => {
-    socket.emit('rollArchive', rollArchive);
-  });
-
-  // Handle user leaving
-  socket.on('disconnect', () => {
-    if (socket.nickname) {
-      users = users.filter(user => user !== socket.nickname);
-      io.emit('updateUserList', users); // Update user list for all clients
+      // Broadcast the roll to all clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ action: 'roll', ...rollData }));
+        }
+      });
+    } else if (data.action === 'requestArchive') {
+      // Send archive data to the client who requested it
+      ws.send(JSON.stringify({ action: 'archive', rolls: rollArchive }));
     }
   });
 
-  // Handle user manually leaving
-  socket.on('userLeft', (nickname) => {
-    users = users.filter(user => user !== nickname);
-    io.emit('updateUserList', users); // Update user list for all clients
+  ws.on('close', () => {
+    console.log('A user disconnected');
+
+    // Remove user from the user list and broadcast update
+    delete users[ws.id];
+    broadcastUserList();
   });
 });
 
-// Start the server
+// Helper function to broadcast the updated list of users
+function broadcastUserList() {
+  const userList = Object.values(users); // Get all connected users' nicknames
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({ action: 'updateUserList', users: userList }));
+    }
+  });
+}
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
