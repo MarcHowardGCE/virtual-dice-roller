@@ -1,4 +1,4 @@
-let nickname = '';
+let nickname = '';  // Ensure nickname is declared and initialized
 const diceButtons = document.querySelectorAll('.dice-button');
 const latestRollSpan = document.getElementById('latest-roll');
 const archiveList = document.getElementById('archive-list');
@@ -17,7 +17,7 @@ window.addEventListener('load', () => {
 
 // Submit nickname when clicking the submit button or pressing Enter
 function submitNickname() {
-  nickname = nicknameInput.value.trim();
+  nickname = nicknameInput.value.trim();  // Get the value from input
   if (nickname) {
     nicknameModal.style.display = 'none';  // Hide the nickname modal
     // Send nickname to the server
