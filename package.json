@@ -1,0 +1,14 @@
+
+{
+  "name": "virtual-dice-roller",
+  "version": "1.0.0",
+  "description": "A real-time virtual dice roller for D&D using Node.js and Socket.io",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^4.0.1"
+  }
+}

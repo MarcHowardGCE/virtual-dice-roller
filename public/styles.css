@@ -1,0 +1,197 @@
+/* General Styles */
+body {
+  font-family: 'Cormorant Garamond', serif;
+  background-color: #333333;
+  background-image: url('assets/background.png'); /* Parchment texture */
+  background-size: cover;
+  background-attachment: fixed;
+  color: #F5F5DC; /* Parchment-colored text */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Application Container */
+#app {
+  background: rgba(0, 0, 0, 0.8); /* Transparent black overlay */
+  border: 3px solid #DAA520; /* Gold ornate border */
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 650px;
+  text-align: center;
+  box-shadow: 0px 0px 25px 10px rgba(218, 165, 32, 0.7); /* Golden glowing shadow */
+  transition: all 0.3s ease-in-out;
+}
+
+#app:hover {
+  box-shadow: 0px 0px 35px 15px rgba(218, 165, 32, 0.9); /* Intensify the glow on hover */
+}
+
+/* Title Font (Fantasy style) */
+h1, h2, h3 {
+  font-family: 'Cinzel', serif;
+  color: #DAA520; /* Gold color for headers */
+  text-shadow: 3px 3px 6px #000000;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+/* Dice Buttons */
+.dice-button {
+  background: linear-gradient(145deg, #8B0000, #4B0000); /* Gradient Dark Red */
+  color: #F5F5DC; /* Light text */
+  border: 3px solid #DAA520; /* Gold border */
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  padding: 12px 20px;
+  margin: 10px 5px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0px 0px 10px 2px #DAA520; /* Glowing effect */
+}
+
+.dice-button img {
+  width: 25px;
+  margin-right: 10px; /* Space between icon and text */
+}
+
+.dice-button:hover {
+  background: linear-gradient(145deg, #DAA520, #FFD700); /* Gold gradient hover effect */
+  color: #333333; /* Dark text on hover */
+  box-shadow: 0px 0px 20px 10px #DAA520; /* Glowing effect intensifies */
+}
+
+.dice-button:disabled {
+  background-color: #555555; /* Greyed out */
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Latest Roll */
+#latest-roll {
+  font-size: 1.6rem;
+  margin-top: 15px;
+  color: #FFD700;
+  text-shadow: 2px 2px 5px #000000;
+}
+
+/* Archive Link */
+#archive-link {
+  color: #DAA520; /* Gold */
+  font-family: 'Cinzel', serif;
+  font-size: 1.2rem;
+  text-decoration: none;
+  border-bottom: 1px solid #DAA520;
+  transition: all 0.3s ease-in-out;
+}
+
+#archive-link:hover {
+  color: #FFD700;
+  border-bottom: 1px solid #FFD700;
+}
+
+/* Logged Users */
+#logged-users {
+  margin-top: 20px;
+  color: #F5F5DC;
+}
+
+#user-list {
+  list-style-type: none;
+  padding: 0;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+/* Modal Styles */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  text-align: center;
+}
+
+.modal-content {
+  background-color: rgba(0, 0, 0, 0.9);
+  margin: 15% auto;
+  padding: 20px;
+  border: 2px solid #DAA520;
+  width: 80%;
+  max-width: 500px;
+}
+
+.modal h2 {
+  font-family: 'Cinzel', serif;
+  color: #DAA520;
+}
+
+input[type="text"] {
+  width: 80%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #DAA520;
+  border-radius: 5px;
+  font-size: 1.2rem;
+  background-color: #555555;
+  color: #F5F5DC;
+}
+
+button#submit-nickname {
+  background-color: #8B0000;
+  color: #F5F5DC;
+  border: 2px solid #DAA520;
+  font-family: 'Cinzel', serif;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+button#submit-nickname:hover {
+  background-color: #DAA520;
+  color: #333333;
+}
+
+/* Archive Modal */
+#archive-modal .modal-content {
+  background-color: rgba(50, 50, 50, 0.95);
+  border: 2px solid #DAA520;
+  color: #F5F5DC;
+}
+
+#archive-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+#archive-list li {
+  background-color: #444444;
+  padding: 10px;
+  margin: 5px 0;
+  border-bottom: 1px solid #DAA520;
+}
+
+.close {
+  color: #F5F5DC;
+  font-size: 28px;
+  font-weight: bold;
+  float: right;
+}
+
+.close:hover {
+  color: #DAA520;
+  cursor: pointer;
+}
