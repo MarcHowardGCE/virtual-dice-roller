@@ -1,4 +1,4 @@
-let nickname = '';  // Ensure nickname is declared and initialized
+let nickname = '';
 const diceButtons = document.querySelectorAll('.dice-button');
 const latestRollSpan = document.getElementById('latest-roll');
 const archiveList = document.getElementById('archive-list');
@@ -10,20 +10,36 @@ const submitNicknameBtn = document.getElementById('submit-nickname');
 const closeModal = document.querySelector('.close');
 const loggedUsersList = document.getElementById('user-list');
 
+// Helper functions to manage local storage
+function saveToLocalStorage(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+function getFromLocalStorage(key) {
+  const data = localStorage.getItem(key);
+  return data ? JSON.parse(data) : null;
+}
+
 // Show nickname modal when the page loads
 window.addEventListener('load', () => {
   nicknameModal.style.display = 'block';  // Show the nickname modal on page load
+  // Load existing users and rolls from local storage
+  updateUserList(getFromLocalStorage('users') || []);
+  updateRollArchive(getFromLocalStorage('rolls') || []);
 });
 
 // Submit nickname when clicking the submit button or pressing Enter
 function submitNickname() {
-  nickname = nicknameInput.value.trim();  // Get the value from input
+  nickname = nicknameInput.value.trim();
   if (nickname) {
     nicknameModal.style.display = 'none';  // Hide the nickname modal
-    // Send nickname to the server
-    fetch(`/api/nickname?nickname=${nickname}`, { method: 'POST' })
-      .then(response => response.json())
-      .then(data => updateUserList(data.users));
+    // Get the current users from local storage and update them
+    const users = getFromLocalStorage('users') || [];
+    if (!users.includes(nickname)) {
+      users.push(nickname);
+      saveToLocalStorage('users', users);
+      updateUserList(users);
+    }
   } else {
     alert('Please enter a valid nickname.');
   }
@@ -43,17 +59,7 @@ nicknameInput.addEventListener('keypress', (event) => {
 archiveLink.addEventListener('click', (event) => {
   event.preventDefault();
   archiveModal.style.display = 'block';  // Show the archive modal
-  // Fetch archive from the server
-  fetch('/api/archive')
-    .then(response => response.json())
-    .then(data => {
-      archiveList.innerHTML = '';  // Clear the archive list
-      data.rolls.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = `${item.nickname} rolled a d${item.diceType}: ${item.rollResult} at ${item.timestamp}`;
-        archiveList.appendChild(li);
-      });
-    });
+  updateRollArchive(getFromLocalStorage('rolls') || []);
 });
 
 // Close the archive modal when clicking the 'X' button
@@ -99,14 +105,15 @@ function rollDice(diceType) {
     if (rollCount >= 10) {
       clearInterval(interval);
 
-      // Send the roll to the server
-      fetch(`/api/roll?nickname=${nickname}&diceType=${diceType}`, { method: 'POST' })
-        .then(response => response.json())
-        .then(data => {
-          const { diceType, rollResult } = data.rollData;
-          latestRollSpan.textContent = `${nickname} rolled a d${diceType}: ${rollResult}`;
-          enableButtons();  // Re-enable buttons after the roll is complete
-        });
+      // Store roll in local storage
+      const rolls = getFromLocalStorage('rolls') || [];
+      const timestamp = new Date().toLocaleString();
+      const rollData = { nickname, diceType, rollResult, timestamp };
+      rolls.push(rollData);
+      saveToLocalStorage('rolls', rolls);
+
+      latestRollSpan.textContent = `${nickname} rolled a d${diceType}: ${rollResult}`;
+      enableButtons();  // Re-enable buttons after the roll is complete
     }
   }, 100);
 }
@@ -134,9 +141,12 @@ function updateUserList(users) {
   });
 }
 
-// Poll server for updated list of logged-in users
-setInterval(() => {
-  fetch('/api/users')
-    .then(response => response.json())
-    .then(data => updateUserList(data.users));
-}, 5000); // Poll every 5 seconds for updated users list
+// Function to update the roll archive
+function updateRollArchive(rolls) {
+  archiveList.innerHTML = '';  // Clear the archive list
+  rolls.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = `${item.nickname} rolled a d${item.diceType}: ${item.rollResult} at ${item.timestamp}`;
+    archiveList.appendChild(li);
+  });
+}
