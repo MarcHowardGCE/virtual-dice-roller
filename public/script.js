@@ -1,9 +1,3 @@
-// Determine the correct WebSocket protocol (ws or wss) based on the environment
-const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-
-// Create a WebSocket connection using the correct protocol
-const ws = new WebSocket(`${protocol}//${window.location.host}`);
-
 let nickname = '';
 const diceButtons = document.querySelectorAll('.dice-button');
 const latestRollSpan = document.getElementById('latest-roll');
@@ -21,14 +15,27 @@ window.addEventListener('load', () => {
   nicknameModal.style.display = 'block';  // Show the nickname modal on page load
 });
 
-// Event listener for nickname submission
-submitNicknameBtn.addEventListener('click', () => {
+// Submit nickname when clicking the submit button or pressing Enter
+function submitNickname() {
   nickname = nicknameInput.value.trim();
   if (nickname) {
     nicknameModal.style.display = 'none';  // Hide the nickname modal
-    ws.send(JSON.stringify({ action: 'nickname', nickname }));
+    // Send nickname to the server
+    fetch(`/api/nickname?nickname=${nickname}`, { method: 'POST' })
+      .then(response => response.json())
+      .then(data => updateUserList(data.users));
   } else {
     alert('Please enter a valid nickname.');
+  }
+}
+
+// Event listener for nickname submission via button click
+submitNicknameBtn.addEventListener('click', submitNickname);
+
+// Event listener for pressing Enter to submit nickname
+nicknameInput.addEventListener('keypress', (event) => {
+  if (event.key === 'Enter') {
+    submitNickname();
   }
 });
 
@@ -36,7 +43,17 @@ submitNicknameBtn.addEventListener('click', () => {
 archiveLink.addEventListener('click', (event) => {
   event.preventDefault();
   archiveModal.style.display = 'block';  // Show the archive modal
-  ws.send(JSON.stringify({ action: 'requestArchive' }));  // Request archive from server
+  // Fetch archive from the server
+  fetch('/api/archive')
+    .then(response => response.json())
+    .then(data => {
+      archiveList.innerHTML = '';  // Clear the archive list
+      data.rolls.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = `${item.nickname} rolled a d${item.diceType}: ${item.rollResult} at ${item.timestamp}`;
+        archiveList.appendChild(li);
+      });
+    });
 });
 
 // Close the archive modal when clicking the 'X' button
@@ -51,34 +68,26 @@ window.addEventListener('click', (event) => {
   }
 });
 
-// WebSocket message handler
-ws.onmessage = function (event) {
-  const data = JSON.parse(event.data);
+// Function to disable all dice buttons
+function disableButtons() {
+  diceButtons.forEach(button => {
+    button.disabled = true;
+  });
+}
 
-  if (data.action === 'roll') {
-    const { diceType, rollResult, nickname } = data;
-    latestRollSpan.textContent = `${nickname} rolled a d${diceType}: ${rollResult}`;
-  } else if (data.action === 'archive') {
-    archiveList.innerHTML = '';  // Clear the archive list
-    data.rolls.forEach(item => {
-      const li = document.createElement('li');
-      li.textContent = `${item.nickname} rolled a d${item.diceType}: ${item.rollResult} at ${item.timestamp}`;
-      archiveList.appendChild(li);
-    });
-  } else if (data.action === 'updateUserList') {
-    // Update the list of logged-in users
-    loggedUsersList.innerHTML = '';  // Clear the user list
-    data.users.forEach(user => {
-      const li = document.createElement('li');
-      li.textContent = user;
-      loggedUsersList.appendChild(li);
-    });
-  }
-};
+// Function to enable all dice buttons
+function enableButtons() {
+  diceButtons.forEach(button => {
+    button.disabled = false;
+  });
+}
 
-// Function to handle dice rolling with animation
+// Function to handle dice rolling with animation and result
 function rollDice(diceType) {
   let rollResult = Math.floor(Math.random() * diceType) + 1;
+
+  // Disable buttons during the roll animation
+  disableButtons();
 
   // Simulate rolling effect for 1 second
   let rollCount = 0;
@@ -89,10 +98,15 @@ function rollDice(diceType) {
     // Stop after 10 rolling iterations (~1 second)
     if (rollCount >= 10) {
       clearInterval(interval);
-      latestRollSpan.textContent = `${nickname} rolled a d${diceType}: ${rollResult}`;
 
-      // Send the final result to the WebSocket server
-      ws.send(JSON.stringify({ action: 'roll', diceType, rollResult, nickname }));
+      // Send the roll to the server
+      fetch(`/api/roll?nickname=${nickname}&diceType=${diceType}`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          const { diceType, rollResult } = data.rollData;
+          latestRollSpan.textContent = `${nickname} rolled a d${diceType}: ${rollResult}`;
+          enableButtons();  // Re-enable buttons after the roll is complete
+        });
     }
   }, 100);
 }
@@ -109,3 +123,20 @@ diceButtons.forEach(button => {
     rollDice(diceType);
   });
 });
+
+// Function to update the list of logged-in users
+function updateUserList(users) {
+  loggedUsersList.innerHTML = '';  // Clear the user list
+  users.forEach(user => {
+    const li = document.createElement('li');
+    li.textContent = user;
+    loggedUsersList.appendChild(li);
+  });
+}
+
+// Poll server for updated list of logged-in users
+setInterval(() => {
+  fetch('/api/users')
+    .then(response => response.json())
+    .then(data => updateUserList(data.users));
+}, 5000); // Poll every 5 seconds for updated users list
