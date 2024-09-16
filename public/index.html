@@ -37,32 +37,24 @@
       <button class="dice-button" data-dice="20">
         <img src="assets/dice-icons/d20-icon.png" alt="d20" /> Roll d20
       </button>
-    </div>    
+    </div>
 
     <div id="latest-result">
       <h2>Latest Roll: <span id="latest-roll">None</span></h2>
     </div>
 
-    <!-- View Archive link -->
     <a href="#" id="archive-link">View ARCHIVE</a>
 
-    <!-- Moved Logged-in Users below archive link -->
     <div id="logged-users">
       <h3>Logged-in Users:</h3>
       <ul id="user-list"></ul>
     </div>
   </div>
 
-  <!-- Archive Modal -->
-  <div id="archive-modal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2>Archived Rolls</h2>
-      <ul id="archive-list" class="archive-list"></ul>
-    </div>
-  </div>
+  <!-- Include Socket.IO Client -->
+  <script src="https://socket.io/socket.io.js"></script>
 
-  <script src="/socket.io/socket.io.js"></script>
+  <!-- Custom Script -->
   <script src="script.js"></script>
 </body>
 </html>
