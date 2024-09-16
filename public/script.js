@@ -1,4 +1,8 @@
-const ws = new WebSocket(`wss://${window.location.host}`);
+// Determine the correct WebSocket protocol (ws or wss) based on the environment
+const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+// Create a WebSocket connection using the correct protocol
+const ws = new WebSocket(`${protocol}//${window.location.host}`);
 
 let nickname = '';
 const diceButtons = document.querySelectorAll('.dice-button');
@@ -21,10 +25,7 @@ window.addEventListener('load', () => {
 submitNicknameBtn.addEventListener('click', () => {
   nickname = nicknameInput.value.trim();
   if (nickname) {
-    // Hide the nickname modal
-    nicknameModal.style.display = 'none';
-
-    // Send the nickname to the server
+    nicknameModal.style.display = 'none';  // Hide the nickname modal
     ws.send(JSON.stringify({ action: 'nickname', nickname }));
   } else {
     alert('Please enter a valid nickname.');
