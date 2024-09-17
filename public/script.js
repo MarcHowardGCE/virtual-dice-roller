@@ -1,3 +1,5 @@
+// public/script.js
+
 let nickname = '';
 const diceButtons = document.querySelectorAll('.dice-button');
 const latestRollSpan = document.getElementById('latest-roll');

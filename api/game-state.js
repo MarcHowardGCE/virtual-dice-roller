@@ -1,6 +1,8 @@
-import clientPromise from '../../lib/mongodb';
+// api/game-state.js
 
-export default async function handler(req, res) {
+const clientPromise = require('../../lib/mongodb');
+
+module.exports = async function handler(req, res) {
   try {
     const client = await clientPromise;
     const db = client.db('diceroll');

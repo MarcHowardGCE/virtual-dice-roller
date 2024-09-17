@@ -1,6 +1,8 @@
-import clientPromise from '../../lib/mongodb';
+// api/nickname.js
 
-export default async function handler(req, res) {
+const clientPromise = require('../../lib/mongodb');
+
+module.exports = async function handler(req, res) {
   if (req.method === 'POST') {
     const { nickname } = req.query;
     try {
