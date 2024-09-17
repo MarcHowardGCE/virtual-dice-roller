@@ -1,26 +1,23 @@
-import clientPromise from '../mongodb';
+import clientPromise from '../../lib/mongodb';
 
 export default async function handler(req, res) {
-  const client = await clientPromise;
-  const db = client.db('diceroll');
-  const gameStateCollection = db.collection('gameState');
+  if (req.method === 'GET') {
+    try {
+      const client = await clientPromise;
+      const db = client.db('diceroll');
+      
+      // Fetch the current game state
+      const gameState = await db.collection('gameState').findOne({ _id: 'state' });
 
-  if (req.method === 'POST') {
-    const { nickname, diceType, rollResult } = req.body;
+      if (!gameState) {
+        return res.status(200).json({ isRolling: false, nickname: null });
+      }
 
-    // Store the game state
-    await gameStateCollection.updateOne(
-      { _id: 'gameState' },
-      { $set: { nickname, diceType, rollResult, timestamp: new Date() } },
-      { upsert: true }
-    );
-
-    res.status(200).json({ message: 'Game state updated' });
-  } else if (req.method === 'GET') {
-    // Return the current game state
-    const gameState = await gameStateCollection.findOne({ _id: 'gameState' });
-    res.status(200).json(gameState || {});
+      res.status(200).json(gameState);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to retrieve game state' });
+    }
   } else {
-    res.status(405).json({ error: 'Method not allowed' });
+    res.status(405).json({ message: 'Method Not Allowed' });
   }
 }

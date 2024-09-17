@@ -31,12 +31,23 @@ function submitNickname() {
       .then(response => response.json())
       .then(data => {
         console.log('Nickname submission response:', data);
-        updateUserList(data.users);
+        updateUserList(data.users); // Update user list
+        enableButtons(); // Enable dice buttons after nickname submission
       })
       .catch(error => console.error('Error submitting nickname:', error));
   } else {
     alert('Please enter a valid nickname.');
   }
+}
+
+// Function to update the list of logged-in users
+function updateUserList(users) {
+  loggedUsersList.innerHTML = ''; // Clear existing users
+  users.forEach(user => {
+    const li = document.createElement('li');
+    li.textContent = user.nickname;
+    loggedUsersList.appendChild(li);
+  });
 }
 
 // Event listener for nickname submission via button click
@@ -49,168 +60,89 @@ nicknameInput.addEventListener('keypress', (event) => {
   }
 });
 
-// Event listener to open the archive modal
-archiveLink.addEventListener('click', (event) => {
-  event.preventDefault();
-  archiveModal.style.display = 'block';  // Show the archive modal
-  // Fetch archive from the server
-  fetch('/api/archive')
-    .then(response => response.json())
-    .then(data => {
-      console.log('Archive data:', data);
-      updateRollArchive(data.rolls);
-    })
-    .catch(error => console.error('Error fetching archive:', error));
-});
-
-// Close the archive modal when clicking the 'X' button
-closeModal.addEventListener('click', () => {
-  archiveModal.style.display = 'none';  // Hide the archive modal
-});
-
-// Close the archive modal when clicking outside the modal
-window.addEventListener('click', (event) => {
-  if (event.target === archiveModal) {
-    archiveModal.style.display = 'none';
-  }
-});
-
-// Poll the server for game state every 2-3 seconds
-setInterval(() => {
-  fetch('/api/game-state')
-    .then(response => response.json())
-    .then(data => {
-      if (data.nickname && data.diceType && data.rollResult) {
-        // Check if another player is rolling
-        if (data.nickname !== nickname) {
-          if (currentRoller !== data.nickname) {
-            // New player is rolling, simulate rolling animation
-            simulateRollingAnimation(data.nickname, data.diceType, data.rollResult);
-            currentRoller = data.nickname;
-          }
-          // Disable dice buttons while another player is rolling
-          disableButtons();
-        } else {
-          // If it's the current player's roll, allow them to roll again
-          enableButtons();
-          currentRoller = null;
-        }
-      }
-    })
-    .catch(error => console.error('Error fetching game state:', error));
-}, 3000); // Poll every 3 seconds
-
-// Function to simulate rolling animation for other players
-function simulateRollingAnimation(playerNickname, diceType, finalRoll) {
-  let rollCount = 0;
-  const rollingInterval = setInterval(() => {
-    const randomRoll = getRandomRoll(diceType); // Simulate random dice roll
-    latestRollSpan.textContent = `${playerNickname} is rolling a d${diceType}: ${randomRoll}`;
-    
-    rollCount++;
-    
-    // Stop after a few iterations (about 1 second) and display the final result
-    if (rollCount >= 10) {
-      clearInterval(rollingInterval);
-      latestRollSpan.textContent = `${playerNickname} rolled a d${diceType}: ${finalRoll}`;
-    }
-  }, 100); // Update every 100ms to simulate rolling animation
-}
-
-// Function to handle dice rolling
-function rollDice(diceType) {
-  if (isRolling) {
-    return; // Prevent rolling if another player is already rolling
-  }
-  
-  isRolling = true;
-  disableButtons(); // Disable dice buttons while rolling
-  
-  const rollResult = Math.floor(Math.random() * diceType) + 1;
-  
-  // Simulate rolling animation and update game state on the server
-  setTimeout(() => {
-    latestRollSpan.textContent = `${nickname} rolled a d${diceType}: ${rollResult}`;
-    
-    // Send the roll to the server to update the game state
-    fetch('/api/game-state', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nickname, diceType, rollResult })
-    })
-    .then(() => {
-      isRolling = false; // Reset rolling flag after roll is completed
-      enableButtons(); // Re-enable buttons for all players
-    })
-    .catch(error => {
-      console.error('Error updating game state:', error);
-      isRolling = false; // Reset rolling flag in case of error
-      enableButtons(); // Re-enable buttons in case of error
-    });
-  }, 1000); // Rolling animation takes 1 second
-}
-
-// Helper function to get a random number for rolling animation
-function getRandomRoll(diceType) {
-  return Math.floor(Math.random() * diceType) + 1;
-}
-
-// Function to disable all dice buttons
+// Disable buttons during rolling
 function disableButtons() {
   diceButtons.forEach(button => {
     button.disabled = true;
   });
 }
 
-// Function to enable all dice buttons
+// Enable buttons after a roll
 function enableButtons() {
-  diceButtons.forEach(button => {
-    button.disabled = false;
-  });
+  if (!isRolling) {
+    diceButtons.forEach(button => {
+      button.disabled = false;
+    });
+  }
 }
 
-// Function to update the list of logged-in users
-function updateUserList(users) {
-  console.log('Updating user list:', users);
-  loggedUsersList.innerHTML = '';  // Clear the user list
-  users.forEach(user => {
-    const li = document.createElement('li');
-    li.textContent = user.nickname || JSON.stringify(user); // Access the 'nickname' property
-    loggedUsersList.appendChild(li);
-  });
+// Handle dice rolling logic
+function rollDice(diceType) {
+  if (isRolling) {
+    return; // Prevent multiple rolls while rolling is in progress
+  }
+
+  isRolling = true;  // Set rolling flag to true
+  disableButtons();  // Disable dice buttons during rolling
+
+  let rollCount = 0;
+  const rollingInterval = setInterval(() => {
+    const randomRoll = Math.floor(Math.random() * diceType) + 1;
+    latestRollSpan.textContent = `${nickname} is rolling a d${diceType}: ${randomRoll}`;
+    rollCount++;
+
+    // Stop after 1 second (10 intervals at 100ms each)
+    if (rollCount >= 10) {
+      clearInterval(rollingInterval);
+
+      const rollResult = Math.floor(Math.random() * diceType) + 1;
+      latestRollSpan.textContent = `${nickname} rolled a d${diceType}: ${rollResult}`;
+
+      // Send the roll result to the server
+      fetch('/api/roll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname, diceType, rollResult })
+      })
+      .then(() => {
+        isRolling = false;  // Reset rolling flag after the roll is completed
+        enableButtons();    // Re-enable buttons after rolling
+      })
+      .catch(error => {
+        console.error('Error updating roll state:', error);
+        isRolling = false;  // Reset in case of error
+        enableButtons();    // Ensure buttons are re-enabled in case of error
+      });
+    }
+  }, 100);  // Update every 100ms to simulate the dice rolling
 }
 
-// Function to update the roll archive
-function updateRollArchive(rolls) {
-  console.log('Updating roll archive:', rolls);
-  archiveList.innerHTML = '';  // Clear the archive list
-  rolls.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = `${item.nickname} rolled a d${item.diceType}: ${item.rollResult} at ${item.timestamp}`;
-    archiveList.appendChild(li);
+// Add click event listeners for each dice button
+diceButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const diceType = parseInt(button.getAttribute('data-dice'), 10);
+    rollDice(diceType);
   });
-}
+});
 
-// Poll the server every 5 seconds for updates on users and rolls
+// Poll the server every few seconds for updates on rolling state
 function pollServer() {
   setInterval(() => {
-    // Fetch users
-    fetch('/api/users')
-      .then(response => response.json())
-      .then(data => updateUserList(data.users))
-      .catch(error => console.error('Error fetching users:', error));
-
-    // Fetch archive
-    fetch('/api/archive')
-      .then(response => response.json())
-      .then(data => updateRollArchive(data.rolls))
-      .catch(error => console.error('Error fetching archive:', error));
-  }, 5000);  // Poll every 5 seconds
+    fetch('/api/game-state')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch game state');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.isRolling && data.nickname !== nickname) {
+          latestRollSpan.textContent = `${data.nickname} is rolling...`;
+          disableButtons();  // Disable dice buttons while another player is rolling
+        } else if (!data.isRolling) {
+          enableButtons();  // Enable buttons if no one is rolling
+        }
+      })
+      .catch(error => console.error('Error polling game state:', error));
+  }, 3000);  // Poll every 3 seconds
 }
-
-// Disconnect user on window/tab close
-window.addEventListener('beforeunload', (event) => {
-  if (nickname) {
-    navigator.sendBeacon(`/api/disconnect?nickname=${nickname}`); // Use sendBeacon to ensure it works during unload
-  }
-});
