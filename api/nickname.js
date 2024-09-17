@@ -1,25 +1,41 @@
-import clientPromise from '../mongodb'; // Correct relative path
+import clientPromise from '../mongodb';
 
 export default async function handler(req, res) {
-  if (req.method === 'POST') {
-    let nickname = req.query.nickname;
+  try {
+    if (req.method === 'POST') {
+      const nickname = req.query.nickname;
 
-    const client = await clientPromise;
-    const db = client.db('myFirstDatabase'); // Use the database name
+      if (!nickname) {
+        return res.status(400).json({ error: 'Nickname is required' });
+      }
 
-    const usersCollection = db.collection('users');
+      const client = await clientPromise;
 
-    // Add the nickname to the database if it doesn't already exist
-    const existingUser = await usersCollection.findOne({ nickname });
-    if (!existingUser) {
-      await usersCollection.insertOne({ nickname });
+      if (!client) {
+        throw new Error('MongoDB client not available');
+      }
+
+      const db = client.db('diceroll'); // Ensure your database name is correct
+      const usersCollection = db.collection('users'); // Use a dedicated users collection
+
+      console.log('Inserting nickname:', nickname);
+
+      // Check if the nickname already exists
+      const existingUser = await usersCollection.findOne({ nickname });
+
+      if (!existingUser) {
+        await usersCollection.insertOne({ nickname });
+      }
+
+      // Fetch all users to send back
+      const users = await usersCollection.find({}).toArray();
+
+      res.status(200).json({ users });
+    } else {
+      res.status(405).json({ error: 'Method Not Allowed' });
     }
-
-    // Fetch all users to send back
-    const users = await usersCollection.find({}).toArray();
-
-    res.status(200).json({ users });
-  } else {
-    res.status(405).end(); // Method Not Allowed
+  } catch (error) {
+    console.error('Error in nickname API:', error);
+    res.status(500).json({ error: 'Failed to handle request' });
   }
 }
