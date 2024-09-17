@@ -86,41 +86,58 @@ function enableButtons() {
   });
 }
 
-// Function to handle dice rolling with animation and result
+let isRolling = false;
+
+// Poll the server for game state every 2-3 seconds
+setInterval(() => {
+  fetch('/api/game-state')
+    .then(response => response.json())
+    .then(data => {
+      if (data.nickname && data.diceType && data.rollResult) {
+        if (data.nickname !== nickname) {
+          // Display the other player's roll on the screen
+          latestRollSpan.textContent = `${data.nickname} rolled a d${data.diceType}: ${data.rollResult}`;
+          
+          // Disable dice buttons while another player is rolling
+          disableButtons();
+        } else {
+          // Re-enable buttons if the current player is rolling
+          enableButtons();
+        }
+      }
+    })
+    .catch(error => console.error('Error fetching game state:', error));
+}, 3000); // Poll every 3 seconds
+
+// Function to handle dice rolling
 function rollDice(diceType) {
-  let rollResult = Math.floor(Math.random() * diceType) + 1;
-
-  // Disable buttons during the roll animation
-  disableButtons();
-
-  // Simulate rolling effect for 1 second
-  let rollCount = 0;
-  const interval = setInterval(() => {
-    latestRollSpan.textContent = `${nickname} is rolling a d${diceType}: ${getRandomRoll(diceType)}`;
-    rollCount++;
-
-    // Stop after 10 rolling iterations (~1 second)
-    if (rollCount >= 10) {
-      clearInterval(interval);
-
-      // Send the roll to the server
-      console.log('Submitting roll:', { nickname, diceType, rollResult });
-      
-      fetch(`/api/roll?nickname=${nickname}&diceType=${diceType}`, { method: 'POST' })
-        .then(response => response.json())
-        .then(data => {
-          const { diceType, rollResult } = data.rollData;
-          console.log('Roll submission response:', data);
-          latestRollSpan.textContent = `${nickname} rolled a d${diceType}: ${rollResult}`;
-          enableButtons();  // Re-enable buttons after the roll is complete
-        })
-        .catch(error => {
-          console.error('Error submitting roll:', error);
-          enableButtons();  // Re-enable buttons even if there's an error
-        });
-    }
-  }, 100);
+  isRolling = true;
+  disableButtons(); // Disable dice buttons while rolling
+  
+  const rollResult = Math.floor(Math.random() * diceType) + 1;
+  
+  // Simulate rolling animation and update game state on the server
+  setTimeout(() => {
+    latestRollSpan.textContent = `${nickname} rolled a d${diceType}: ${rollResult}`;
+    
+    // Send the roll to the server to update the game state
+    fetch('/api/game-state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nickname, diceType, rollResult })
+    })
+    .then(() => {
+      isRolling = false;
+      enableButtons(); // Re-enable buttons after roll
+    })
+    .catch(error => {
+      console.error('Error updating game state:', error);
+      isRolling = false;
+      enableButtons(); // Re-enable buttons in case of an error
+    });
+  }, 1000); // Rolling animation takes 1 second
 }
+
 
 // Helper function to get a random number for the rolling animation
 function getRandomRoll(diceType) {
@@ -177,3 +194,11 @@ function pollServer() {
       .catch(error => console.error('Error fetching archive:', error));
   }, 5000);  // Poll every 5 seconds
 }
+
+window.addEventListener('beforeunload', (event) => {
+  // Trigger API call to remove user when the window or tab is closed
+  if (nickname) {
+    navigator.sendBeacon(`/api/disconnect?nickname=${nickname}`); // Use sendBeacon to make sure it works during unload
+  }
+});
+
