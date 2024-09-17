@@ -1,4 +1,4 @@
-import clientPromise from '../../lib/mongodb';
+import clientPromise from '../../lib/mongodb'; // This path is correct relative to the api folder
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
