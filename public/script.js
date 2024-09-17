@@ -10,22 +10,10 @@ const submitNicknameBtn = document.getElementById('submit-nickname');
 const closeModal = document.querySelector('.close');
 const loggedUsersList = document.getElementById('user-list');
 
-// Helper functions to manage local storage
-function saveToLocalStorage(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
-}
-
-function getFromLocalStorage(key) {
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : null;
-}
-
 // Show nickname modal when the page loads
 window.addEventListener('load', () => {
   nicknameModal.style.display = 'block';  // Show the nickname modal on page load
-  // Load existing users and rolls from local storage
-  updateUserList(getFromLocalStorage('users') || []);
-  updateRollArchive(getFromLocalStorage('rolls') || []);
+  pollServer();  // Start polling the server for updates
 });
 
 // Submit nickname when clicking the submit button or pressing Enter
@@ -33,13 +21,16 @@ function submitNickname() {
   nickname = nicknameInput.value.trim();
   if (nickname) {
     nicknameModal.style.display = 'none';  // Hide the nickname modal
-    // Get the current users from local storage and update them
-    const users = getFromLocalStorage('users') || [];
-    if (!users.includes(nickname)) {
-      users.push(nickname);
-      saveToLocalStorage('users', users);
-      updateUserList(users);
-    }
+    console.log('Submitting nickname:', nickname);
+    
+    // Send nickname to the server
+    fetch(`/api/nickname?nickname=${nickname}`, { method: 'POST' })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Nickname submission response:', data);
+        updateUserList(data.users);
+      })
+      .catch(error => console.error('Error submitting nickname:', error));
   } else {
     alert('Please enter a valid nickname.');
   }
@@ -59,7 +50,14 @@ nicknameInput.addEventListener('keypress', (event) => {
 archiveLink.addEventListener('click', (event) => {
   event.preventDefault();
   archiveModal.style.display = 'block';  // Show the archive modal
-  updateRollArchive(getFromLocalStorage('rolls') || []);
+  // Fetch archive from the server
+  fetch('/api/archive')
+    .then(response => response.json())
+    .then(data => {
+      console.log('Archive data:', data);
+      updateRollArchive(data.rolls);
+    })
+    .catch(error => console.error('Error fetching archive:', error));
 });
 
 // Close the archive modal when clicking the 'X' button
@@ -105,15 +103,21 @@ function rollDice(diceType) {
     if (rollCount >= 10) {
       clearInterval(interval);
 
-      // Store roll in local storage
-      const rolls = getFromLocalStorage('rolls') || [];
-      const timestamp = new Date().toLocaleString();
-      const rollData = { nickname, diceType, rollResult, timestamp };
-      rolls.push(rollData);
-      saveToLocalStorage('rolls', rolls);
-
-      latestRollSpan.textContent = `${nickname} rolled a d${diceType}: ${rollResult}`;
-      enableButtons();  // Re-enable buttons after the roll is complete
+      // Send the roll to the server
+      console.log('Submitting roll:', { nickname, diceType, rollResult });
+      
+      fetch(`/api/roll?nickname=${nickname}&diceType=${diceType}`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          const { diceType, rollResult } = data.rollData;
+          console.log('Roll submission response:', data);
+          latestRollSpan.textContent = `${nickname} rolled a d${diceType}: ${rollResult}`;
+          enableButtons();  // Re-enable buttons after the roll is complete
+        })
+        .catch(error => {
+          console.error('Error submitting roll:', error);
+          enableButtons();  // Re-enable buttons even if there's an error
+        });
     }
   }, 100);
 }
@@ -127,12 +131,14 @@ function getRandomRoll(diceType) {
 diceButtons.forEach(button => {
   button.addEventListener('click', () => {
     const diceType = button.getAttribute('data-dice');
+    console.log('Rolling dice:', diceType);
     rollDice(diceType);
   });
 });
 
 // Function to update the list of logged-in users
 function updateUserList(users) {
+  console.log('Updating user list:', users);
   loggedUsersList.innerHTML = '';  // Clear the user list
   users.forEach(user => {
     const li = document.createElement('li');
@@ -143,10 +149,28 @@ function updateUserList(users) {
 
 // Function to update the roll archive
 function updateRollArchive(rolls) {
+  console.log('Updating roll archive:', rolls);
   archiveList.innerHTML = '';  // Clear the archive list
   rolls.forEach(item => {
     const li = document.createElement('li');
     li.textContent = `${item.nickname} rolled a d${item.diceType}: ${item.rollResult} at ${item.timestamp}`;
     archiveList.appendChild(li);
   });
+}
+
+// Poll the server every 5 seconds for updates on users and rolls
+function pollServer() {
+  setInterval(() => {
+    // Fetch users
+    fetch('/api/users')
+      .then(response => response.json())
+      .then(data => updateUserList(data.users))
+      .catch(error => console.error('Error fetching users:', error));
+
+    // Fetch archive
+    fetch('/api/archive')
+      .then(response => response.json())
+      .then(data => updateRollArchive(data.rolls))
+      .catch(error => console.error('Error fetching archive:', error));
+  }, 5000);  // Poll every 5 seconds
 }
