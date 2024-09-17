@@ -9,9 +9,7 @@ const nicknameInput = document.getElementById('nickname-input');
 const submitNicknameBtn = document.getElementById('submit-nickname');
 const closeModal = document.querySelector('.close');
 const loggedUsersList = document.getElementById('user-list');
-const myTurnButton = document.createElement('button'); // MY TURN button
-myTurnButton.textContent = "MY TURN";
-document.body.appendChild(myTurnButton); // Append the button below the header
+const myTurnButton = document.getElementById('my-turn-button'); // MY TURN button
 
 let isRolling = false; // Track if the current user is rolling
 let currentTurnPlayer = null; // Track whose turn it is to roll
@@ -204,14 +202,16 @@ function updateUserList(users) {
     const li = document.createElement('li');
     li.textContent = user.nickname || JSON.stringify(user); // Access the 'nickname' property
 
-    // Create the KICK link and append it to the list item
-    const kickLink = document.createElement('a');
-    kickLink.textContent = 'KICK';
-    kickLink.style.float = 'right'; // Align the KICK link to the right
-    kickLink.href = '#';
-    kickLink.addEventListener('click', () => kickUser(user.nickname));
+    // If the user is not the current user, show the KICK button
+    if (user.nickname !== nickname) {
+      const kickButton = document.createElement('button');
+      kickButton.textContent = 'KICK';
+      kickButton.classList.add('kick-button'); // Add styles to the KICK button
+      kickButton.addEventListener('click', () => kickUser(user.nickname));
+
+      li.appendChild(kickButton);
+    }
     
-    li.appendChild(kickLink); // Add the KICK link to the list item
     loggedUsersList.appendChild(li);
   });
 }
