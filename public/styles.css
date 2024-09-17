@@ -197,31 +197,3 @@ button#submit-nickname:hover {
   color: #DAA520;
   cursor: pointer;
 }
-
-.kick-button {
-  background-color: red;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  margin-left: 20px;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-.kick-button:hover {
-  background-color: darkred;
-}
-
-.my-turn-btn {
-  background-color: green;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 16px;
-}
-
-.my-turn-btn:hover {
-  background-color: darkgreen;
-}

@@ -7,36 +7,61 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Virtual Dice Roller</h1>
-
-  <!-- MY TURN Button -->
-  <button id="my-turn-button" class="my-turn-btn">MY TURN</button>
-
-  <div id="latest-roll">No rolls yet</div>
-
-  <!-- Dice Buttons -->
-  <div id="dice-buttons">
-    <button class="dice-button" data-dice="4">Roll d4</button>
-    <button class="dice-button" data-dice="6">Roll d6</button>
-    <button class="dice-button" data-dice="8">Roll d8</button>
-    <button class="dice-button" data-dice="10">Roll d10</button>
-    <button class="dice-button" data-dice="12">Roll d12</button>
-    <button class="dice-button" data-dice="20">Roll d20</button>
-  </div>
-
-  <!-- User List -->
-  <ul id="user-list"></ul>
-
-  <!-- Archive Link -->
-  <a id="archive-link" href="#">View Archive</a>
-
-  <div id="archive-modal" class="modal">
+  <!-- Nickname Input Modal -->
+  <div id="nickname-modal" class="modal">
     <div class="modal-content">
-      <span class="close">&times;</span>
-      <ul id="archive-list"></ul>
+      <h2>Enter your nickname</h2>
+      <input type="text" id="nickname-input" placeholder="Your nickname">
+      <button id="submit-nickname">Submit</button>
     </div>
   </div>
 
+  <!-- Main Dice Roller Application -->
+  <div id="app">
+    <h1>D&D Virtual Dice Roller</h1>
+    <div class="dice-container">
+      <button class="dice-button" data-dice="4">
+        <img src="assets/dice-icons/d4-icon.png" alt="d4" /> Roll d4
+      </button>
+      <button class="dice-button" data-dice="6">
+        <img src="assets/dice-icons/d6-icon.png" alt="d6" /> Roll d6
+      </button>
+      <button class="dice-button" data-dice="8">
+        <img src="assets/dice-icons/d8-icon.png" alt="d8" /> Roll d8
+      </button>
+      <button class="dice-button" data-dice="10">
+        <img src="assets/dice-icons/d10-icon.png" alt="d10" /> Roll d10
+      </button>
+      <button class="dice-button" data-dice="12">
+        <img src="assets/dice-icons/d12-icon.png" alt="d12" /> Roll d12
+      </button>
+      <button class="dice-button" data-dice="20">
+        <img src="assets/dice-icons/d20-icon.png" alt="d20" /> Roll d20
+      </button>
+    </div>
+
+    <div id="latest-result">
+      <h2>Latest Roll: <span id="latest-roll">None</span></h2>
+    </div>
+
+    <a href="#" id="archive-link">View ARCHIVE</a>
+
+    <div id="logged-users">
+      <h3>Logged-in Users:</h3>
+      <ul id="user-list"></ul>
+    </div>
+  </div>
+
+  <!-- Archive Modal -->
+  <div id="archive-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Archived Rolls</h2>
+      <ul id="archive-list" class="archive-list"></ul>
+    </div>
+  </div>
+
+  <!-- Include WebSocket Client -->
   <script src="script.js"></script>
 </body>
 </html>
