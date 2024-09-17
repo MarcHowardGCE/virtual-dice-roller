@@ -1,24 +1,21 @@
-import clientPromise from '../../lib/mongodb'; // This path is correct relative to the api folder
+const clientPromise = require('../lib/mongodb');
 
 export default async function handler(req, res) {
-  try {
-    const client = await clientPromise;
+  if (req.method === 'GET') {
+    try {
+      const client = await clientPromise;
+      const db = client.db('diceroll');
 
-    if (!client) {
-      throw new Error('MongoDB client not available');
+      // Fetch archived rolls and return as an array of objects
+      const archive = await db.collection('rolls').find({}).toArray();
+      
+      // Return the archive data as an array
+      res.status(200).json(archive);
+    } catch (error) {
+      console.error('Error fetching archive:', error);
+      res.status(500).json({ error: 'Failed to fetch archive' });
     }
-
-    const db = client.db('diceroll'); // Ensure your database name is correct
-    const rollsCollection = db.collection('diceroll'); // Make sure your collection name is correct
-
-    console.log('Fetching archive of rolls');
-
-    // Fetch all rolls from the database
-    const rolls = await rollsCollection.find({}).toArray();
-
-    res.status(200).json({ rolls });
-  } catch (error) {
-    console.error('Error in archive API:', error);
-    res.status(500).json({ error: 'Failed to retrieve archive' });
+  } else {
+    res.status(405).json({ message: 'Method Not Allowed' });
   }
 }
