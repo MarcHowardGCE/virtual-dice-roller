@@ -1,26 +1,18 @@
-const { MongoClient } = require('mongodb');
-require('dotenv').config(); // Ensure dotenv is loaded
+// Load environment variables
+require('dotenv').config();
+
+const clientPromise = require('./lib/mongodb');
 
 async function testMongoConnection() {
-  const uri = process.env.MONGODB_URI; // Check if MONGODB_URI is loaded
-
-  if (!uri) {
-    console.error('MONGODB_URI is not defined. Please check your environment variables.');
-    return;
-  }
-
-  const client = new MongoClient(uri);
-
   try {
-    await client.connect();
-    console.log('MongoDB connection successful');
-    const db = client.db('diceroll'); // Ensure your database name is correct
-    const collections = await db.collections();
-    console.log('Collections:', collections);
+    const client = await clientPromise;
+    const db = client.db('diceroll');
+
+    // Test the connection by fetching something from the database
+    const data = await db.collection('gameState').findOne({});
+    console.log('Database connection successful, data:', data);
   } catch (error) {
-    console.error('MongoDB connection failed:', error);
-  } finally {
-    await client.close();
+    console.error('Error connecting to MongoDB:', error);
   }
 }
 

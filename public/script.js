@@ -146,3 +146,4 @@ function pollServer() {
       .catch(error => console.error('Error polling game state:', error));
   }, 3000);  // Poll every 3 seconds
 }
+

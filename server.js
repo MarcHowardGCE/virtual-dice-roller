@@ -50,3 +50,36 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Track the current game state
+let gameState = {
+  isRolling: false,
+  nickname: null,
+};
+
+// Get the current game state
+app.get('/api/game-state', (req, res) => {
+  res.json(gameState);
+});
+
+// Update the game state when a roll happens
+app.post('/api/roll', (req, res) => {
+  const diceType = req.query.diceType;
+  const nickname = req.query.nickname;
+  const rollResult = Math.floor(Math.random() * diceType) + 1;
+
+  // Set rolling state
+  gameState.isRolling = true;
+  gameState.nickname = nickname;
+
+  // Simulate the end of rolling after 1 second
+  setTimeout(() => {
+    gameState.isRolling = false;
+  }, 1000);
+
+  const timestamp = new Date().toLocaleString();
+  const rollData = { nickname, diceType, rollResult, timestamp };
+  rollArchive.push(rollData);
+
+  res.json({ rollData });
+});
