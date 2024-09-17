@@ -1,4 +1,4 @@
-const clientPromise = require('../lib/mongodb');
+import clientPromise from '../../lib/mongodb';
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
@@ -14,11 +14,10 @@ export default async function handler(req, res) {
         { upsert: true }
       );
 
-      // Fetch the list of active users and return it as an array of objects
+      // Fetch the list of active users
       const users = await db.collection('users').find({ active: true }).toArray();
 
-      // Ensure users are returned as objects with the 'nickname' field
-      res.status(200).json({ users });  // Return users array directly
+      res.status(200).json({ users });
     } catch (error) {
       console.error('Error submitting nickname:', error);
       res.status(500).json({ error: 'Failed to submit nickname' });

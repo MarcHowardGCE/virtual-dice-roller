@@ -1,4 +1,4 @@
-const clientPromise = require('../lib/mongodb');
+import clientPromise from '../../lib/mongodb';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
@@ -6,11 +6,15 @@ export default async function handler(req, res) {
       const client = await clientPromise;
       const db = client.db('diceroll');
 
-      // Fetch archived rolls and return as an array of objects
+      // Fetch archived rolls from the 'rolls' collection
       const archive = await db.collection('rolls').find({}).toArray();
-      
-      // Return the archive data as an array
-      res.status(200).json(archive);
+
+      if (!Array.isArray(archive)) {
+        res.status(200).json([]);  // Return an empty array if no data found
+        return;
+      }
+
+      res.status(200).json(archive);  // Return the array of archived rolls
     } catch (error) {
       console.error('Error fetching archive:', error);
       res.status(500).json({ error: 'Failed to fetch archive' });
