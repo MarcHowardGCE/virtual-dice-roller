@@ -138,14 +138,17 @@ diceButtons.forEach(button => {
 
 // Function to update the list of logged-in users
 function updateUserList(users) {
-  console.log('Updating user list:', users);
+  console.log('Updating user list:', users); // Log the users to see their structure
   loggedUsersList.innerHTML = '';  // Clear the user list
+
   users.forEach(user => {
+    // Assuming 'user' is an object with a 'nickname' property, adjust accordingly
     const li = document.createElement('li');
-    li.textContent = user;
+    li.textContent = user.nickname || JSON.stringify(user); // Access the 'nickname' property
     loggedUsersList.appendChild(li);
   });
 }
+
 
 // Function to update the roll archive
 function updateRollArchive(rolls) {
