@@ -9,9 +9,12 @@ const nicknameInput = document.getElementById('nickname-input');
 const submitNicknameBtn = document.getElementById('submit-nickname');
 const closeModal = document.querySelector('.close');
 const loggedUsersList = document.getElementById('user-list');
+const myTurnButton = document.createElement('button'); // MY TURN button
+myTurnButton.textContent = "MY TURN";
+document.body.appendChild(myTurnButton); // Append the button below the header
 
 let isRolling = false; // Track if the current user is rolling
-let currentRoller = null; // Track which player is currently rolling
+let currentTurnPlayer = null; // Track whose turn it is to roll
 
 // Show nickname modal when the page loads
 window.addEventListener('load', () => {
@@ -75,7 +78,33 @@ window.addEventListener('click', (event) => {
   }
 });
 
-// Poll the server for game state every 2-3 seconds
+// Handle "MY TURN" Button Click
+myTurnButton.addEventListener('click', () => {
+  if (currentTurnPlayer === nickname) {
+    alert('It is already your turn!');
+    return;
+  }
+
+  // Set the current player who is taking the turn
+  currentTurnPlayer = nickname;
+  updateTurnForAllPlayers(nickname);
+  enableButtons(); // Enable buttons for the player whose turn it is
+});
+
+// Function to update the current player's turn for all players
+function updateTurnForAllPlayers(player) {
+  fetch('/api/update-turn', {  // Create an API to update the current player's turn in the backend
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nickname: player })
+  })
+    .then(() => {
+      console.log(`${player}'s turn has been set`);
+    })
+    .catch(error => console.error('Error updating turn:', error));
+}
+
+// Poll the server for game state and current turn every 2-3 seconds
 setInterval(() => {
   fetch('/api/game-state')
     .then(response => response.json())
@@ -83,19 +112,16 @@ setInterval(() => {
       if (data.nickname && data.diceType && data.rollResult) {
         // Check if another player is rolling
         if (data.nickname !== nickname) {
-          if (currentRoller !== data.nickname) {
-            // New player is rolling, simulate rolling animation
-            simulateRollingAnimation(data.nickname, data.diceType, data.rollResult);
-            currentRoller = data.nickname;
-          }
+          simulateRollingAnimation(data.nickname, data.diceType, data.rollResult);
           disableButtons(); // Disable buttons while another player is rolling
         } else {
-          currentRoller = null; // Current user has finished rolling
-          enableButtons(); // Allow this user to roll again
+          enableButtons(); // Enable buttons for the current player
         }
-      } else {
-        // No one is rolling, allow the user to roll
-        enableButtons();
+      }
+
+      // Handle current turn
+      if (data.currentTurnPlayer && data.currentTurnPlayer !== nickname) {
+        disableButtons(); // Disable dice rolling for others while it's not their turn
       }
     })
     .catch(error => console.error('Error fetching game state:', error));
@@ -120,8 +146,8 @@ function simulateRollingAnimation(playerNickname, diceType, finalRoll) {
 
 // Function to handle dice rolling
 function rollDice(diceType) {
-  if (isRolling || currentRoller !== null) {
-    return; // Prevent rolling if this or another player is already rolling
+  if (currentTurnPlayer !== nickname || isRolling) {
+    return; // Only allow rolling if it's the player's turn
   }
   
   isRolling = true;
@@ -141,7 +167,7 @@ function rollDice(diceType) {
     })
     .then(() => {
       isRolling = false; // Reset rolling flag after roll is completed
-      enableButtons(); // Re-enable buttons for all players
+      enableButtons(); // Re-enable buttons after the roll is complete
     })
     .catch(error => {
       console.error('Error updating game state:', error);
@@ -165,11 +191,9 @@ function disableButtons() {
 
 // Function to enable all dice buttons
 function enableButtons() {
-  if (!isRolling && currentRoller === null) {
-    diceButtons.forEach(button => {
-      button.disabled = false;
-    });
-  }
+  diceButtons.forEach(button => {
+    button.disabled = false;
+  });
 }
 
 // Function to update the list of logged-in users
@@ -179,8 +203,26 @@ function updateUserList(users) {
   users.forEach(user => {
     const li = document.createElement('li');
     li.textContent = user.nickname || JSON.stringify(user); // Access the 'nickname' property
+
+    // Create the KICK link and append it to the list item
+    const kickLink = document.createElement('a');
+    kickLink.textContent = 'KICK';
+    kickLink.style.float = 'right'; // Align the KICK link to the right
+    kickLink.href = '#';
+    kickLink.addEventListener('click', () => kickUser(user.nickname));
+    
+    li.appendChild(kickLink); // Add the KICK link to the list item
     loggedUsersList.appendChild(li);
   });
+}
+
+// Function to kick a user
+function kickUser(userNickname) {
+  fetch(`/api/disconnect?nickname=${userNickname}`, { method: 'POST' })
+    .then(() => {
+      console.log(`${userNickname} has been kicked`);
+    })
+    .catch(error => console.error('Error kicking user:', error));
 }
 
 // Function to update the roll archive
