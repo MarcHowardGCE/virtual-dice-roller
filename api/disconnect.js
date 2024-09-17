@@ -1,4 +1,4 @@
-import clientPromise from '../../lib/mongodb'; // This path is correct relative to the api folder
+import clientPromise from '../../lib/mongodb'; 
 
 export default async function handler(req, res) {
   try {
@@ -10,21 +10,13 @@ export default async function handler(req, res) {
       }
 
       const client = await clientPromise;
+      const db = client.db('diceroll');
 
-      if (!client) {
-        throw new Error('MongoDB client not available');
-      }
+      // Remove the user from the active users list
+      await db.collection('users').updateOne({ nickname }, { $set: { active: false } });
 
-      const db = client.db('diceroll'); // Ensure your database name is correct
-      const usersCollection = db.collection('users'); // Use a dedicated users collection
-
-      console.log('Removing nickname:', nickname);
-
-      // Remove the user from the users collection
-      await usersCollection.deleteOne({ nickname });
-
-      // Fetch all users to send back
-      const users = await usersCollection.find({}).toArray();
+      // Fetch all remaining active users
+      const users = await db.collection('users').find({ active: true }).toArray();
 
       res.status(200).json({ users });
     } else {
