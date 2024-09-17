@@ -1,4 +1,4 @@
-import clientPromise from '../mongodb';
+import clientPromise from '../mongodb'; // Correct relative path
 
 export default async function handler(req, res) {
   console.log('Roll API hit');  // Add this line to confirm the route is hit
