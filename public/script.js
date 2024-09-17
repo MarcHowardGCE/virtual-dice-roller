@@ -10,7 +10,7 @@ const submitNicknameBtn = document.getElementById('submit-nickname');
 const closeModal = document.querySelector('.close');
 const loggedUsersList = document.getElementById('user-list');
 
-let isRolling = false; // Track if any player is rolling
+let isRolling = false; // Track if the current user is rolling
 let currentRoller = null; // Track which player is currently rolling
 
 // Show nickname modal when the page loads
@@ -88,13 +88,14 @@ setInterval(() => {
             simulateRollingAnimation(data.nickname, data.diceType, data.rollResult);
             currentRoller = data.nickname;
           }
-          // Disable dice buttons while another player is rolling
-          disableButtons();
+          disableButtons(); // Disable buttons while another player is rolling
         } else {
-          // If it's the current player's roll, allow them to roll again
-          enableButtons();
-          currentRoller = null;
+          currentRoller = null; // Current user has finished rolling
+          enableButtons(); // Allow this user to roll again
         }
+      } else {
+        // No one is rolling, allow the user to roll
+        enableButtons();
       }
     })
     .catch(error => console.error('Error fetching game state:', error));
@@ -119,8 +120,8 @@ function simulateRollingAnimation(playerNickname, diceType, finalRoll) {
 
 // Function to handle dice rolling
 function rollDice(diceType) {
-  if (isRolling) {
-    return; // Prevent rolling if another player is already rolling
+  if (isRolling || currentRoller !== null) {
+    return; // Prevent rolling if this or another player is already rolling
   }
   
   isRolling = true;
@@ -164,9 +165,11 @@ function disableButtons() {
 
 // Function to enable all dice buttons
 function enableButtons() {
-  diceButtons.forEach(button => {
-    button.disabled = false;
-  });
+  if (!isRolling && currentRoller === null) {
+    diceButtons.forEach(button => {
+      button.disabled = false;
+    });
+  }
 }
 
 // Function to update the list of logged-in users
